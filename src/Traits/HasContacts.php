@@ -1,10 +1,12 @@
-<?php namespace Kwidoo\Contacts\Traits;
+<?php
+
+namespace Kwidoo\Contacts\Traits;
 
 use Exception;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Collection;
-
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Kwidoo\Contacts\Models\Contact;
 use Kwidoo\Contacts\Exceptions\FailedValidationException;
 
@@ -20,9 +22,9 @@ trait HasContacts
      *
      * @return MorphMany
      */
-    public function contacts(): MorphMany
+    public function contact(): MorphOne
     {
-        return $this->morphMany(Contact::class, 'contactable');
+        return $this->morphOne(Contact::class, 'contactable')->latestOfMany();
     }
 
     /**
@@ -44,8 +46,6 @@ trait HasContacts
      */
     public function addContact(array $attributes)
     {
-        $attributes = $this->loadContactAttributes($attributes);
-
         return $this->contacts()->updateOrCreate($attributes);
     }
 
@@ -59,8 +59,6 @@ trait HasContacts
      */
     public function updateContact(Contact $contact, array $attributes): bool
     {
-        $attributes = $this->loadContactAttributes($attributes);
-
         return $contact->fill($attributes)->save();
     }
 
@@ -87,40 +85,5 @@ trait HasContacts
     public function flushContacts(): bool
     {
         return $this->contacts()->delete();
-    }
-
-    /**
-     * Add country id to attributes array.
-     *
-     * @param  array  $attributes
-     * @return array
-     * @throws FailedValidationException
-     */
-    public function loadContactAttributes(array $attributes): array
-    {
-        // run validation
-        $validator = $this->validateContact($attributes);
-
-        if ($validator->fails()) {
-            $errors = $validator->errors()->all();
-            $error  = '[Addresses] '. implode(' ', $errors);
-
-            throw new FailedValidationException($error);
-        }
-
-        return $attributes;
-    }
-
-    /**
-     * Validate the contact.
-     *
-     * @param  array  $attributes
-     * @return Validator
-     */
-    function validateContact(array $attributes): Validator
-    {
-        $rules = Contact::getValidationRules();
-
-        return validator($attributes, $rules);
     }
 }

@@ -2,39 +2,35 @@
 
 namespace Kwidoo\Contacts\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
-use Kwidoo\Contacts\Traits\HasCountry;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Kwidoo\Contacts\Collections\ContactCollection;
+use Kwidoo\Contacts\Contracts\Item;
+use Kwidoo\Contacts\Items\ContactItem;
+use Kwidoo\Contacts\Casts\ContactItemCast;
+use Spatie\Translatable\HasTranslations;
+use Webpatser\Uuid\Uuid;
 
 /**
- * Class Contact
+ *
  * @package Kwidoo\Contacts\Models
- * @property string|null   $gender
- * @property string|null   $title
- * @property string|null   $first_name
- * @property string|null   $middle_name
- * @property string|null   $last_name
- * @property string|null   $company
- * @property string|null   $extra
- * @property string|null   $position
- * @property string|null   $phone
- * @property string|null   $mobile
- * @property string|null   $fax
- * @property string|null   $email
- * @property string|null   $email_invoice
- * @property string|null   $website
- * @property string|null   $vat_id
- * @property string|null   $notes
- * @property array|null    $properties
- * @property int|null      $address_id
- * @property Address|null  $address
+ *
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $company
+ * @property string $vat_id
+ *
  */
 class Contact extends Model
 {
-    use HasCountry;
+    use HasTranslations;
+
+    public const DEFAULT_TYPE = 'email';
+
     use SoftDeletes;
 
     /** @inheritdoc */
@@ -46,22 +42,13 @@ class Contact extends Model
         'last_name',
 
         'company',
+        'vat_id',
         'extra',
         'position',
-
-        'phone',
-        'mobile',
-        'fax',
-        'email',
-        'email_invoice',
-        'website',
-
-        'vat_id',
+        'values',
 
         'notes',
         'properties',
-
-        'address_id',
 
         'contactable_id',
         'contactable_type',
@@ -74,16 +61,20 @@ class Contact extends Model
 
     /** @inheritdoc */
     protected $casts = [
+        'values' => ContactItemCast::class,
         'properties' => 'array',
     ];
+
+    /**
+     * @var array
+     */
+    public $translatable = ['title', 'first_name', 'middle_name', 'last_name'];
 
     /** @inheritdoc */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-
-        $this->table = config('contacts.table', 'contacts');
-        $this->updateFillables();
+        $this->table = config('contacts.tables.main', 'contacts');
     }
 
     /** @inheritdoc */
@@ -96,21 +87,8 @@ class Contact extends Model
                 ->getSchemaBuilder()
                 ->hasColumn($model->getTable(), 'uuid')
             )
-                $model->uuid = \Webpatser\Uuid\Uuid::generate()->string;
+                $model->uuid = Uuid::generate()->string;
         });
-    }
-
-    /**
-     * Update fillable fields dynamically.
-     *
-     * @return void
-     */
-    private function updateFillables(): void
-    {
-        $fillable = $this->fillable;
-        $columns  = preg_filter('/^/', 'is_', config('addresses.columns', ['public', 'primary', 'billing', 'shipping']));
-
-        $this->fillable(array_merge($fillable, $columns));
     }
 
     /**
@@ -124,62 +102,31 @@ class Contact extends Model
     }
 
     /**
-     * Get the address that might own this contact.
+     * @param array $models
      *
-     * @return BelongsTo
+     * @return ContactCollection
      */
-    public function address(): BelongsTo
+    public function newCollection(array $models = [])
     {
-        return $this->belongsTo(Address::class);
+        return new ContactCollection($models);
     }
 
-    /**
-     * Get the validation rules.
-     *
-     * @return array
-     */
-    public static function getValidationRules(): array
+    public function __call($method, $parameters)
     {
-        return config('contacts.rules', []);
-    }
-
-    /**
-     * Get the contacts full name.
-     *
-     * @param  bool  $show_salutation
-     * @return string
-     */
-    public function getFullNameAttribute(bool $show_salutation = false): string
-    {
-        $names = [];
-        $names[] = $show_salutation && $this->gender ? trans('addresses::contacts.salutation.' . $this->gender) : '';
-        $names[] = $this->first_name  ?: '';
-        $names[] = $this->middle_name ?: '';
-        $names[] = $this->last_name   ?: '';
-
-        return trim(implode(' ', array_filter($names)));
-    }
-
-    /**
-     * Get the contacts full name, reversed.
-     *
-     * @param  bool  $show_salutation
-     * @return string
-     */
-    public function getFullNameRevAttribute(bool $show_salutation = false): string
-    {
-        $first = [];
-        $first[] = $this->first_name  ?: '';
-        $first[] = $this->middle_name ?: '';
-
-        $last = [];
-        $last[] = $show_salutation && $this->gender ? trans('addresses::contacts.salutation.' . $this->gender) : '';
-        $last[] = $this->last_name ?: '';
-
-        $names = [];
-        $names[] = implode(' ', array_filter($last));
-        $names[] = implode(' ', array_filter($first));
-
-        return trim(implode(', ', array_filter($names)));
+        $name = Str::lower(str_replace('Value', '', str_replace('add', '', $method)));
+        if (in_array($name, config('contacts.value_types'))) {
+            $value = $parameters[0];
+            if (is_array($parameters[0])) {
+                if (!array_key_exists($name, $parameters[0])) {
+                    throw new Exception('Wrong parameter type');
+                }
+                $value = $parameters[0][$name];
+            }
+            return $this->addValue([
+                'type' => $name,
+                'value' => $value
+            ]);
+        }
+        return parent::__call($method, $parameters);
     }
 }
