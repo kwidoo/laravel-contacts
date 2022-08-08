@@ -167,4 +167,9 @@ class ContactItem implements Item, JsonSerializable
     {
         $this->rules = config('contacts.rules');
     }
+
+    public function toArray()
+    {
+        return $this->data;
+    }
 }

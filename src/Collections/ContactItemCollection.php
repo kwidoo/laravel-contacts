@@ -3,15 +3,29 @@
 namespace Kwidoo\Contacts\Collections;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Kwidoo\Contacts\Contracts\Item;
 use Kwidoo\Contacts\Items\ContactItem;
+use phpDocumentor\Reflection\Types\Self_;
 
 class ContactItemCollection extends Collection
 {
     protected Model $model;
 
+    protected array $additional = [
+        'company',
+        'first_name',
+        'last_name',
+        'type',
+        'title',
+        'middle_name',
+        'vat_id',
+        'position',
+        'notes',
+        'properties'
+    ];
     /**
      * Push one or more items onto the end of the collection.
      *
@@ -21,12 +35,14 @@ class ContactItemCollection extends Collection
     public function push(...$values)
     {
         if ($values[0] instanceof Item) {
+            // @todo add flag to clear previous values
             foreach ($this->items as $item) {
                 if ($item->is($values[0])) {
                     return $this;
                 }
             }
         }
+
         return parent::push($values[0]);
     }
 
@@ -133,10 +149,39 @@ class ContactItemCollection extends Collection
         });
     }
 
+    /**
+     * @param FormRequest $request
+     *
+     * @return self
+     */
+    public function fillFrom(FormRequest $request): self
+    {
+        foreach ($request->validated() as $key => $value) {
+            if (!in_array($key, $this->additional)) {
+                $this->push(new ContactItem([
+                    'type' => $key,
+                    'value' => $value
+                ]));
+            }
+            if (!in_array($key, $this->additional)) {
+                $this->$key = $value;
+            }
+        }
+
+        return $this;
+    }
+
     public function __get($name)
     {
         if (in_array($name, config('contacts.value_types'))) {
-            return $this->ofType($name)->pluck('value');
+            $value = $this->ofType($name)->pluck('value');
+            if ($value->count() === 1) {
+                return $value->first();
+            }
+            return $value;
+        }
+        if (in_array($name, $this->additional)) {
+            return $this->model->$name;
         }
         return parent::__get($name);
     }
@@ -145,6 +190,9 @@ class ContactItemCollection extends Collection
     {
         if (in_array($name, config('contacts.value_types'))) {
             $this->push(new ContactItem(['type' => $name, 'value' => $value]));
+        }
+        if (in_array($name, $this->additional)) {
+            $this->model->$name = $value;
         }
     }
 
@@ -160,6 +208,12 @@ class ContactItemCollection extends Collection
     public function save()
     {
         $this->model->values = $this->all();
+        $this->model->save();
+    }
+
+    public function delete()
+    {
+        $this->model->values = null;
         $this->model->save();
     }
 }

@@ -27,8 +27,6 @@ use Webpatser\Uuid\Uuid;
  */
 class Contact extends Model
 {
-    use HasTranslations;
-
     public const DEFAULT_TYPE = 'email';
 
     use SoftDeletes;
@@ -65,12 +63,6 @@ class Contact extends Model
         'properties' => 'array',
     ];
 
-    /**
-     * @var array
-     */
-    public $translatable = ['title', 'first_name', 'middle_name', 'last_name'];
-
-    /** @inheritdoc */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);

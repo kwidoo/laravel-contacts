@@ -2,7 +2,7 @@
 
 namespace Kwidoo\Contacts\Collections;
 
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
 use Kwidoo\Contacts\Items\ContactItem;
 
 class ContactCollection extends Collection

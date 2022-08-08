@@ -11,7 +11,7 @@ return [
     /**
      * Possible owner types
      */
-    'types' => ['personal', 'business'],
+    'types' => ['personal', 'company'],
 
     /**
      * Possible contact types

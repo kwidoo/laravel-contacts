@@ -3,12 +3,11 @@
 namespace Kwidoo\Contacts\Traits;
 
 use Exception;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Kwidoo\Contacts\Contracts\Item;
 use Kwidoo\Contacts\Models\Contact;
-use Kwidoo\Contacts\Exceptions\FailedValidationException;
 
 /**
  * Class HasContacts
@@ -22,7 +21,7 @@ trait HasContacts
      *
      * @return MorphMany
      */
-    public function contact(): MorphOne
+    public function contacts(): MorphOne
     {
         return $this->morphOne(Contact::class, 'contactable')->latestOfMany();
     }
@@ -34,7 +33,7 @@ trait HasContacts
      */
     public function hasContacts(): bool
     {
-        return (bool) $this->contacts()->count();
+        return (bool) $this->contacts->count();
     }
 
     /**
@@ -44,37 +43,28 @@ trait HasContacts
      * @return mixed
      * @throws Exception
      */
-    public function addContact(array $attributes)
+    public function addContact($item)
     {
-        return $this->contacts()->updateOrCreate($attributes);
-    }
 
-    /**
-     * Updates the given contact.
-     *
-     * @param  Contact  $contact
-     * @param  array    $attributes
-     * @return bool
-     * @throws Exception
-     */
-    public function updateContact(Contact $contact, array $attributes): bool
-    {
-        return $contact->fill($attributes)->save();
-    }
+        $count = $this->contacts->count();
 
-    /**
-     * Deletes given contact.
-     *
-     * @param  Contact  $contact
-     * @return bool
-     * @throws Exception
-     */
-    public function deleteContact(Contact $contact): bool
-    {
-        if ($this !== $contact->contactable()->first())
-            return false;
-
-        return $contact->delete();
+        if ($item instanceof Item) {
+            $this->contacts->push($item);
+        }
+        if (is_string($item)) {
+            $this->contacts->email = $item;
+        }
+        if (is_array($item)) {
+            $key = array_keys($item)[0];
+            if ($key === 0) {
+                $key = 'email';
+            }
+            $this->contacts->$key = $item;
+        }
+        if ($count < $this->contacts->count()) {
+            $this->contacts->save();
+        }
+        return $this->contacts;
     }
 
     /**
@@ -82,8 +72,8 @@ trait HasContacts
      *
      * @return bool
      */
-    public function flushContacts(): bool
+    public function flushContacts(): void
     {
-        return $this->contacts()->delete();
+        $this->contacts->delete();
     }
 }
