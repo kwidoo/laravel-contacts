@@ -2,91 +2,40 @@
 
 namespace Kwidoo\Contacts\Models;
 
-use Exception;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Kwidoo\Contacts\Contracts\Contact as ContactContract;
+use Kwidoo\Contacts\Exceptions\DuplicateEmailException;
 use Illuminate\Support\Str;
-use Kwidoo\Contacts\Collections\ContactCollection;
-use Kwidoo\Contacts\Contracts\Item;
-use Kwidoo\Contacts\Items\ContactItem;
-use Kwidoo\Contacts\Casts\ContactItemCast;
-use Spatie\Translatable\HasTranslations;
-use Webpatser\Uuid\Uuid;
 
-/**
- *
- * @package Kwidoo\Contacts\Models
- *
- * @property string $first_name
- * @property string $last_name
- * @property string $company
- * @property string $vat_id
- *
- */
-class Contact extends Model
+class Contact extends Model implements ContactContract
 {
-    public const DEFAULT_TYPE = 'email';
-
+    use HasFactory;
     use SoftDeletes;
 
-    /** @inheritdoc */
     protected $fillable = [
-        'gender',
-        'title',
-        'first_name',
-        'middle_name',
-        'last_name',
-
-        'company',
-        'vat_id',
-        'extra',
-        'position',
-        'values',
-
-        'notes',
-        'properties',
-
-        'contactable_id',
         'contactable_type',
+        'contactable_id',
+        'type',
+        'value',
+        'is_primary',
+        'is_verified',
+        'verification_token',
     ];
 
-    /** @inheritdoc */
-    protected $dates = [
-        'deleted_at',
-    ];
-
-    /** @inheritdoc */
-    protected $casts = [
-        'values' => ContactItemCast::class,
-        'properties' => 'array',
-    ];
-
-    public function __construct(array $attributes = [])
+    protected function casts(): array
     {
-        parent::__construct($attributes);
-        $this->table = config('contacts.tables.main', 'contacts');
-    }
-
-    /** @inheritdoc */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if ($model->getConnection()
-                ->getSchemaBuilder()
-                ->hasColumn($model->getTable(), 'uuid')
-            )
-                $model->uuid = Uuid::generate()->string;
-        });
+        return [
+            'is_primary' => 'boolean',
+            'is_verified' => 'boolean',
+        ];
     }
 
     /**
-     * Get the related model.
-     *
-     * @return MorphTo
+     * Polymorphic relationship to the parent model (e.g. User).
      */
     public function contactable(): MorphTo
     {
@@ -94,31 +43,86 @@ class Contact extends Model
     }
 
     /**
-     * @param array $models
-     *
-     * @return ContactCollection
+     * @return HasMany
      */
-    public function newCollection(array $models = [])
+    public function tokens(): HasMany
     {
-        return new ContactCollection($models);
+        return $this->hasMany(config('contacts.token.model'));
     }
 
-    public function __call($method, $parameters)
+    /**
+     * Helper to check if contact is primary.
+     */
+    public function isPrimary(): bool
     {
-        $name = Str::lower(str_replace('Value', '', str_replace('add', '', $method)));
-        if (in_array($name, config('contacts.value_types'))) {
-            $value = $parameters[0];
-            if (is_array($parameters[0])) {
-                if (!array_key_exists($name, $parameters[0])) {
-                    throw new Exception('Wrong parameter type');
-                }
-                $value = $parameters[0][$name];
+        return (bool) $this->is_primary;
+    }
+
+    /**
+     * Helper to check if contact is verified.
+     */
+    public function isVerified(): bool
+    {
+        return (bool) $this->is_verified;
+    }
+
+    public function getTable()
+    {
+        return config('contacts.table');
+    }
+
+    /**
+     * @return string
+     */
+    public function getRouteKeyName(): string
+    {
+        return config('contacts.uuid') ? 'uuid' : 'id';
+    }
+
+    /**
+     * @return string
+     */
+    public function getKeyName(): string
+    {
+        return config('contacts.uuid') ? 'uuid' : 'id';
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIncrementing(): bool
+    {
+        return !config('contacts.uuid');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (config('contacts.uuid') && empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
             }
-            return $this->addValue([
-                'type' => $name,
-                'value' => $value
-            ]);
-        }
-        return parent::__call($method, $parameters);
+
+            $duplicateExists = self::whereHasMorph(
+                'contactable',
+                $model->contactable->getMorphClass(),
+                fn($query) =>
+                $query->where($model->contactable->getKeyName(), $model->contactable_id)
+            )->where('value', $model->value)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($duplicateExists) {
+                throw new DuplicateEmailException("Email {$model->value} already exists for this entity.");
+            }
+
+            $model->is_primary = !self::whereHasMorph(
+                'contactable',
+                $model->contactable->getMorphClass(),
+                fn($query) =>
+                $query->where($model->contactable->getKeyName(), $model->contactable_id)
+            )->exists();
+        });
     }
 }
