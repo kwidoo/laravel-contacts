@@ -6,7 +6,7 @@ use Kwidoo\Contacts\Models\Contact;
 
 interface ContactService
 {
-    public function create(string $type, string $value): Contact;
+    public function create(string $type, string $value): string|int;
 
     public function destroy(Contact $contact): bool;
 

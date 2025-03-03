@@ -8,7 +8,7 @@ use Exception;
  * Class ContactServiceException
  * @package Kwidoo\Contacts\Exceptions
  */
-class DuplicateEmailException extends Exception
+class DuplicateContactException extends Exception
 {
     //
 }

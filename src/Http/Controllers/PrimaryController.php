@@ -5,6 +5,7 @@ namespace Kwidoo\Contacts\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 use Kwidoo\Contacts\Contracts\Contact;
 use Kwidoo\Contacts\Services\PrimaryManager;
 
@@ -60,6 +61,20 @@ class PrimaryController extends Controller
         ]);
     }
 
+    public function markAsPrimary(Request $request, Contact $contact)
+    {
+        if (!$request->user()->can('update', $contact->contactable)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Assuming a service or direct aggregate interaction
+        ContactAggregateRoot::retrieve($contact->uuid)
+            ->changePrimary($contact->contactable->getPrimaryContact()->uuid, $contact->uuid)
+            ->persist();
+
+        return response()->json(['message' => 'Contact marked as primary']);
+    }
+
     /**
      * @param Contact $oldContact
      * @param Contact $newContact
@@ -68,7 +83,7 @@ class PrimaryController extends Controller
      */
     protected function primaryManager(Contact $oldContact, Contact $newContact): PrimaryManager
     {
-        return app(PrimaryManager::class, [
+        return app()->make(PrimaryManager::class, [
             'oldPrimary' => $oldContact,
             'newPrimary' => $newContact
         ]);

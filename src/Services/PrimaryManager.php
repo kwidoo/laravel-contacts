@@ -3,7 +3,9 @@
 namespace Kwidoo\Contacts\Services;
 
 use Kwidoo\Contacts\Contracts\Contact;
+use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 use InvalidArgumentException;
+use Kwidoo\Contacts\Contracts\VerificationService;
 
 /**
  * @property \Kwidoo\Contacts\Models\Contact $oldPrimary
@@ -52,6 +54,7 @@ class PrimaryManager
      */
     public function verify(string $oldToken, string $newToken): bool
     {
+
         return $this->oldVerification->verify($oldToken) &&
             $this->newVerification->verify($newToken);
     }
@@ -60,8 +63,9 @@ class PrimaryManager
      */
     public function swap(): void
     {
-        $this->oldPrimary->update(['is_primary' => false]);
-        $this->newPrimary->update(['is_primary' => true]);
+        ContactAggregateRoot::retrieve($this->oldPrimary->getKey())
+            ->changePrimary($this->oldPrimary->getKey(), $this->newPrimary->getKey())
+            ->persist();
     }
 
     /**

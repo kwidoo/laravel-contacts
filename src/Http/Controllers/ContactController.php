@@ -64,9 +64,8 @@ class ContactController extends Controller
      * Store a newly created contact.
      *
      * @param StoreRequest $request
-     * @return JsonResponse
      */
-    public function store(StoreRequest $request): JsonResponse
+    public function store(StoreRequest $request)
     {
         $contactService = app()->make(ContactService::class, [
             'model' => $request->user()
@@ -77,7 +76,7 @@ class ContactController extends Controller
             $request->get('value')
         );
 
-        return response()->json($contact, 201);
+        return redirect()->route('contacts.show', $contact);
     }
 
     /**

@@ -30,6 +30,9 @@ class ContactServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/contacts.php', 'contacts');
 
+        $config = app()->make('config');
+        $config->set('event-sourcing.projectors', array_merge(config('event-sourcing.projectors', []), [\Kwidoo\Contacts\Projectors\ContactProjector::class]));
+
         $this->app->bind(ContactServiceContract::class, ContactService::class);
 
         $this->app->bind(TokenGeneratorContract::class, TokenGenerator::class);

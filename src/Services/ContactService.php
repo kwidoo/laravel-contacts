@@ -2,10 +2,12 @@
 
 namespace Kwidoo\Contacts\Services;
 
+use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 use Kwidoo\Contacts\Contracts\ContactService as ContactServiceContract;
 use Kwidoo\Contacts\Models\Contact;
 use Kwidoo\Contacts\Exceptions\ContactServiceException;
 use Kwidoo\Contacts\Contracts\Contactable;
+use Illuminate\Support\Str;
 
 class ContactService implements ContactServiceContract
 {
@@ -18,9 +20,9 @@ class ContactService implements ContactServiceContract
      *
      * @param string $type
      * @param string $value
-     * @return Contact
+     * @return string|int
      */
-    public function create(string $type, string $value): Contact
+    public function create(string $type, string $value): string|int
     {
         $allowedTypes = array_keys(config('contacts.verifiers'));
 
@@ -28,12 +30,12 @@ class ContactService implements ContactServiceContract
             throw new ContactServiceException("Invalid contact type: {$type}");
         }
 
-        return $this->model->contacts()->create([
-            'type'        => $type,
-            'value'       => $value,
-            'is_primary'  => false,
-            'is_verified' => false,
-        ]);
+        $uuid = Str::uuid()->toString();
+        ContactAggregateRoot::retrieve($uuid)
+            ->createContact($this->model, $uuid, $type, $value)
+            ->persist();
+
+        return $uuid;
     }
 
     /**
@@ -49,7 +51,11 @@ class ContactService implements ContactServiceContract
             throw new ContactServiceException("Can't delete primary contact.");
         }
 
-        return (bool) $contact->delete();
+        ContactAggregateRoot::retrieve($contact->getKey())
+            ->deleteContact($contact->getKey())
+            ->persist();
+
+        return true;
     }
 
     /**

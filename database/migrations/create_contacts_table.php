@@ -26,7 +26,6 @@ return new class extends Migration
             $table->string('value');
             $table->boolean('is_primary')->default(false);
             $table->boolean('is_verified')->default(false);
-            $table->string('verification_token')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

@@ -2,28 +2,28 @@
 
 namespace Kwidoo\Contacts\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Kwidoo\Contacts\Contracts\Contact as ContactContract;
-use Kwidoo\Contacts\Exceptions\DuplicateEmailException;
+use Kwidoo\Contacts\Exceptions\DuplicateContactException;
 use Illuminate\Support\Str;
+use Spatie\EventSourcing\Projections\Projection;
 
-class Contact extends Model implements ContactContract
+class Contact extends Projection implements ContactContract
 {
     use HasFactory;
     use SoftDeletes;
 
     protected $fillable = [
+        'uuid',
         'contactable_type',
         'contactable_id',
         'type',
         'value',
         'is_primary',
         'is_verified',
-        'verification_token',
     ];
 
     protected function casts(): array
@@ -95,7 +95,7 @@ class Contact extends Model implements ContactContract
         return !config('contacts.uuid');
     }
 
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 
@@ -110,11 +110,12 @@ class Contact extends Model implements ContactContract
                 fn($query) =>
                 $query->where($model->contactable->getKeyName(), $model->contactable_id)
             )->where('value', $model->value)
+                ->where('type', $model->type)
                 ->whereNull('deleted_at')
                 ->exists();
 
             if ($duplicateExists) {
-                throw new DuplicateEmailException("Email {$model->value} already exists for this entity.");
+                throw new DuplicateContactException("{$model->type} {$model->value} already exists for this entity.");
             }
 
             $model->is_primary = !self::whereHasMorph(
