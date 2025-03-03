@@ -1,12 +1,11 @@
 <?php
 
-namespace Tests\Feature;
+namespace Kwidoo\Contacts\Tests\Feature;
 
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\User;
+use Kwidoo\Contacts\Tests\Fixtures\User;
 use Kwidoo\Contacts\Models\Contact;
-use Illuminate\Support\Str;
+use Kwidoo\Contacts\Tests\TestCase;
 
 class ContactTest extends TestCase
 {
@@ -15,7 +14,7 @@ class ContactTest extends TestCase
     /**
      * Test that a new contact is created and marked as primary if it is the first contact.
      */
-    public function test_store_contact_creates_contact_and_sets_primary_if_first_contact()
+    public function testStoreContactCreatesContactAndSetsPrimaryIfFirstContact()
     {
         $user = User::factory()->create();
         $this->actingAs($user, 'api');
@@ -47,7 +46,7 @@ class ContactTest extends TestCase
     /**
      * Test that a non-admin user cannot update a contact they do not own.
      */
-    public function test_non_admin_cannot_update_another_users_contact()
+    public function testNonAdminCannotUpdateAnotherUsersContact()
     {
         $user = User::factory()->create(['is_admin' => false]);
         $otherUser = User::factory()->create(['is_admin' => false]);
@@ -69,7 +68,7 @@ class ContactTest extends TestCase
     /**
      * Test that a non-admin user can update their own contact.
      */
-    public function test_non_admin_can_update_their_own_contact()
+    public function testNonAdminCanUpdateTheirOwnContact()
     {
         $user = User::factory()->create(['is_admin' => false]);
         $contact = Contact::factory()->create([
@@ -96,7 +95,7 @@ class ContactTest extends TestCase
     /**
      * Test that an admin user can update any contact.
      */
-    public function test_admin_can_update_any_contact()
+    public function testAdminCanUpdateAnyContact()
     {
         $admin = User::factory()->create(['is_admin' => true]);
         $otherUser = User::factory()->create(['is_admin' => false]);
@@ -124,7 +123,7 @@ class ContactTest extends TestCase
     /**
      * Test that a non-admin user cannot delete a contact they do not own.
      */
-    public function test_non_admin_cannot_delete_other_users_contact()
+    public function testNonAdminCannotDeleteOtherUsersContact()
     {
         $user = User::factory()->create(['is_admin' => false]);
         $otherUser = User::factory()->create(['is_admin' => false]);
@@ -142,7 +141,7 @@ class ContactTest extends TestCase
     /**
      * Test that deleting a primary contact is not allowed.
      */
-    public function test_cannot_delete_primary_contact()
+    public function testCannotDeletePrimaryContact()
     {
         $user = User::factory()->create(['is_admin' => false]);
         $contact = Contact::factory()->create([
@@ -161,7 +160,7 @@ class ContactTest extends TestCase
     /**
      * Test that a non-primary contact can be deleted successfully.
      */
-    public function test_delete_contact_successfully()
+    public function testDeleteContactSuccessfully()
     {
         $user = User::factory()->create(['is_admin' => false]);
 
@@ -188,7 +187,7 @@ class ContactTest extends TestCase
     /**
      * Test that verifying a contact with the correct token works.
      */
-    public function test_verify_contact_with_correct_token()
+    public function testVerifyContactWithCorrectToken()
     {
         $user = User::factory()->create();
         $token = 'correct-token';
@@ -216,7 +215,7 @@ class ContactTest extends TestCase
     /**
      * Test that verifying a contact with an incorrect token fails.
      */
-    public function test_verify_contact_with_incorrect_token()
+    public function testVerifyContactWithIncorrectToken()
     {
         $user = User::factory()->create();
         $contact = Contact::factory()->create([
@@ -242,7 +241,7 @@ class ContactTest extends TestCase
     /**
      * Test that marking a contact as primary fails if the contact is not verified.
      */
-    public function test_mark_contact_as_primary_fails_if_not_verified()
+    public function testMarkContactAsPrimaryFailsIfNotVerified()
     {
         $user = User::factory()->create();
         $contact = Contact::factory()->create([
@@ -261,7 +260,7 @@ class ContactTest extends TestCase
     /**
      * Test that a verified contact can be marked as primary and that any previously primary contact is unset.
      */
-    public function test_mark_contact_as_primary_successfully()
+    public function testMarkContactAsPrimarySuccessfully()
     {
         $user = User::factory()->create();
         // Create two verified contacts.
@@ -300,7 +299,7 @@ class ContactTest extends TestCase
     /**
      * Test that a soft-deleted contact can be restored.
      */
-    public function test_restore_soft_deleted_contact()
+    public function testRestoreSoftDeletedContact()
     {
         $user = User::factory()->create();
         $contact = Contact::factory()->create([

@@ -19,7 +19,7 @@ class Token extends Model
     protected $fillable = [
         'token',
         'contact_id',
-        'value',
+        'contact_uuid',
         'method',
         'expires_at',
         'verified_at',

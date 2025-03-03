@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Kwidoo\Contacts\Contracts\Contact as ContactContract;
 use Kwidoo\Contacts\Exceptions\DuplicateContactException;
 use Illuminate\Support\Str;
+use Kwidoo\Database\Factories\ContactFactory;
 use Spatie\EventSourcing\Projections\Projection;
 
 class Contact extends Projection implements ContactContract
@@ -106,24 +107,28 @@ class Contact extends Projection implements ContactContract
 
             $duplicateExists = self::whereHasMorph(
                 'contactable',
-                $model->contactable->getMorphClass(),
+                $model->contactable?->getMorphClass(),
                 fn($query) =>
                 $query->where($model->contactable->getKeyName(), $model->contactable_id)
             )->where('value', $model->value)
                 ->where('type', $model->type)
                 ->whereNull('deleted_at')
                 ->exists();
-
             if ($duplicateExists) {
                 throw new DuplicateContactException("{$model->type} {$model->value} already exists for this entity.");
             }
 
             $model->is_primary = !self::whereHasMorph(
                 'contactable',
-                $model->contactable->getMorphClass(),
+                $model->contactable?->getMorphClass(),
                 fn($query) =>
                 $query->where($model->contactable->getKeyName(), $model->contactable_id)
             )->exists();
         });
+    }
+
+    protected static function newFactory()
+    {
+        return ContactFactory::new();
     }
 }

@@ -4,6 +4,7 @@ namespace Kwidoo\Contacts\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class StoreRequest extends FormRequest
 {
@@ -27,7 +28,7 @@ class StoreRequest extends FormRequest
         if ($this->input('type') === 'email') {
             $rules['value'][] = 'email:filter';
         } elseif ($this->input('type') === 'phone') {
-            $rules['value'][] = 'phone'; // Requires a phone validator
+            $rules['value'][] = (new Phone); // Requires a phone validator
         }
 
         return $rules;
