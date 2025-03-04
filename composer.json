@@ -21,11 +21,9 @@
         }
     ],
     "require": {
-        "php": "^8.0",
-        "ext-json": "*",
-        "propaganistas/laravel-phone": "^5.3.4",
+        "php": "^8.2",
         "spatie/laravel-event-sourcing": "^7.5",
-        "twilio/sdk": "^6.0"
+        "kwidoo/sms-verification": "^1.2"
     },
     "require-dev": {
         "orchestra/testbench": "^10.0",
@@ -54,9 +52,6 @@
             "providers": [
                 "Kwidoo\\Contacts\\ContactServiceProvider"
             ]
-        },
-        "branch-alias": {
-            "dev-master": "1.0.x-dev"
         }
     },
     "support": {

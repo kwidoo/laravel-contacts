@@ -3,7 +3,7 @@
 return [
     'types' => ['phone',  'email'],
     'verifiers' => [
-        'phone' => \Kwidoo\Contacts\Services\PhoneVerifier::class,
+        'phone' => \Kwidoo\SmsVerification\Verifiers\TwilioVerifier::class,
         'email' => \Kwidoo\Contacts\Services\EmailVerifier::class,
     ],
 

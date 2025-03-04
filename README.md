@@ -1,3 +1,8 @@
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/kwidoo/laravel-contacts.svg?style=flat-square)](https://packagist.org/packages/kwidoo/laravel-contacts)
+[![Total Downloads](https://img.shields.io/packagist/dt/kwidoo/laravel-contacts.svg?style=flat-square)](https://packagist.org/packages/kwidoo/laravel-contacts)
+![GitHub Actions](https://github.com/kwidoo/laravel-contacts/actions/workflows/main.yml/badge.svg)
+
+
 # Laravel Contacts
 
 A Laravel package that provides a robust, event-sourced approach to managing multiple contact types (e.g., phone, email) for your Eloquent models. It offers features such as:
