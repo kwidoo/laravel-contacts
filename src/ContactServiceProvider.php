@@ -11,7 +11,7 @@ use Kwidoo\Contacts\Services\TokenGenerator;
 use Kwidoo\Contacts\Services\VerificationService;
 use Kwidoo\Contacts\Contracts\VerificationService as VerificationServiceContract;
 use Kwidoo\Contacts\Services\ContactService;
-
+use Illuminate\Support\Facades\Route;
 
 class ContactServiceProvider extends ServiceProvider
 {
@@ -33,6 +33,7 @@ class ContactServiceProvider extends ServiceProvider
         $config->set('event-sourcing.projectors', array_merge(config('event-sourcing.projectors', []), [\Kwidoo\Contacts\Projectors\ContactProjector::class]));
 
         $this->app->bind(Contact::class, config('contacts.model'));
+        Route::model('contact', config('contacts.model'));
 
         $this->app->bind(ContactServiceContract::class, ContactService::class);
 
