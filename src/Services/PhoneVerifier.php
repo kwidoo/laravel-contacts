@@ -5,14 +5,14 @@ namespace Kwidoo\Contacts\Services;
 use Kwidoo\Contacts\Contracts\Contact;
 use Kwidoo\Contacts\Contracts\TokenGenerator;
 use Kwidoo\Contacts\Contracts\Verifier;
-use Kwidoo\MultiAuth\Services\TwilioService;
+use Kwidoo\SmsVerification\Contracts\VerifierInterface;
 
 class PhoneVerifier implements Verifier
 {
     public function __construct(
         protected Contact $contact,
         protected TokenGenerator $tokenGenerator,
-        protected TwilioService $twilioService
+        protected VerifierInterface $phoneService
     ) {
         //
     }
@@ -24,7 +24,7 @@ class PhoneVerifier implements Verifier
      */
     public function create(): void
     {
-        $this->twilioService->create($this->contact->value);
+        $this->phoneService->create($this->contact->value);
     }
 
     /**
@@ -35,7 +35,7 @@ class PhoneVerifier implements Verifier
      */
     public function verify(string $token): bool
     {
-        return $this->twilioService->validate([
+        return $this->phoneService->validate([
             $this->contact->value,
             $token
         ]);

@@ -15,7 +15,8 @@ class EmailVerifier implements Verifier
 {
     public function __construct(
         protected TokenGenerator $tokenGenerator,
-        protected Contact $contact
+        protected Contact $contact,
+        protected string $template = \Kwidoo\Contacts\Notifications\TokenNotification::class
     ) {}
 
     /**
@@ -28,7 +29,7 @@ class EmailVerifier implements Verifier
 
         Notification::route('mail', $this->contact->value)
             ->notify(
-                app()->make(TokenNotification::class, [
+                app()->make($this->template, [
                     'token' => $token->token
                 ])
             );
@@ -46,7 +47,7 @@ class EmailVerifier implements Verifier
             ->where('token', $token)
             ->isNotExpired()
             ->isNotVerified()
-            ->first();
+            ->firstOrFail();
 
         if (!$token) {
             return false;

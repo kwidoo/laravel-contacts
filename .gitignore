@@ -3,3 +3,5 @@ vendor
 .DS_Store
 composer.phar
 composer.lock
+merged.php
+concat.sh

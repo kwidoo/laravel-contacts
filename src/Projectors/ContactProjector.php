@@ -61,7 +61,7 @@ class ContactProjector extends Projector
      */
     public function onContactVerified(ContactVerified $event): void
     {
-        $contact = config('contacts.model')::find('uuid', $event->contactUuid);
+        $contact = config('contacts.model')::find($event->contactUuid);
         if ($contact) {
             $contact->writeable()->update(['is_verified' => true]);
         }

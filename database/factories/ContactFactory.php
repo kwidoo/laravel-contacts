@@ -20,17 +20,23 @@ class ContactFactory extends Factory
      */
     public function definition(): array
     {
-        $user = User::factory()->create();
-
         return [
             'uuid' => $this->faker->uuid,
-            'contactable_type' => get_class($user),
-            'contactable_id' => $user->uuid,
             'type' => 'email',
             'value' => $this->faker->unique()->safeEmail,
             'is_primary' => $this->faker->boolean,
             'is_verified' => $this->faker->boolean,
         ];
+    }
+
+    public function toUser($user): ContactFactory
+    {
+        return $this->state(function (array $attributes) use ($user) {
+            return [
+                'contactable_type' => get_class($user),
+                'contactable_id' => $user->uuid,
+            ];
+        });
     }
 
     public function email(): ContactFactory
