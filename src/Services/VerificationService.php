@@ -37,11 +37,19 @@ class VerificationService implements VerificationServiceContract
         $verified = $this->verifier->verify($token);
 
         if ($verified) {
-            ContactAggregateRoot::retrieve($this->contact->getKey())
-                ->verifyContact($this->contact->getKey(), get_class($this->verifier))
-                ->persist();
+            $this->markVerified();
         }
 
         return $verified;
+    }
+
+    /**
+     * @return void
+     */
+    public function markVerified(): void
+    {
+        ContactAggregateRoot::retrieve($this->contact->getKey())
+            ->verifyContact($this->contact->getKey(), get_class($this->verifier))
+            ->persist();
     }
 }
