@@ -4,6 +4,9 @@ namespace Kwidoo\Contacts\Projectors;
 
 use Exception;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Kwidoo\Contacts\Contracts\MustVerify;
+use Kwidoo\Contacts\Contracts\Repositories\ContactRepository;
+use Kwidoo\Contacts\Contracts\VerificationServiceFactory;
 use Kwidoo\Contacts\Events\ContactCreated;
 use Kwidoo\Contacts\Events\ContactDeleted;
 use Kwidoo\Contacts\Events\ContactVerified;
@@ -17,8 +20,12 @@ class ContactProjector extends Projector
         ContactDeleted::class => 'onContactDeleted',
         ContactVerified::class => 'onContactVerified',
         PrimaryChanged::class => 'onPrimaryChanged',
-
     ];
+
+    public function __construct(
+        protected ContactRepository $repository,
+        protected VerificationServiceFactory $vsf
+    ) {}
 
     /**
      * @param ContactCreated $event
@@ -29,16 +36,27 @@ class ContactProjector extends Projector
     {
         $class = Relation::getMorphedModel($event->class) ?? $event->class;
 
-        $model = ($class)::find($event->identifier);
-        $contact = $model->contacts()->make([
+        $model = $class::find($event->identifier);
+        if (!$model) {
+            throw new Exception('Model not found');
+        }
+
+        $contact = $this->repository->make([
             ...($event->contactUuid ? ['uuid' => $event->contactUuid] : []),
             'type' => $event->type,
             'value' => $event->value,
             'is_primary' => false,
             'is_verified' => false,
+            'contactable_id' => $event->identifier,
+            'contactable_type' => $class,
         ]);
 
         $contact->writeable()->save();
+
+        if ($model instanceof MustVerify || config('iam.should_verify')) {
+            $verificationService = $this->vsf->make($contact);
+            $verificationService->create();
+        }
     }
 
     /**
@@ -48,7 +66,7 @@ class ContactProjector extends Projector
      */
     public function onContactDeleted(ContactDeleted $event): void
     {
-        $contact = config('contacts.model')::find($event->contactUuid);
+        $contact = $this->repository->find($event->contactUuid);
         if ($contact) {
             $contact->writeable()->delete();
         }
@@ -61,7 +79,7 @@ class ContactProjector extends Projector
      */
     public function onContactVerified(ContactVerified $event): void
     {
-        $contact = config('contacts.model')::find($event->contactUuid);
+        $contact = $this->repository->find($event->contactUuid);
         if ($contact) {
             $contact->writeable()->update(['is_verified' => true]);
         }
@@ -74,8 +92,8 @@ class ContactProjector extends Projector
      */
     public function onPrimaryChanged(PrimaryChanged $event): void
     {
-        $oldPrimary = config('contacts.model')::find($event->oldContactUuid);
-        $newPrimary = config('contacts.model')::find($event->newContactUuid);
+        $oldPrimary = $this->repository->find($event->oldContactUuid);
+        $newPrimary = $this->repository->find($event->newContactUuid);
 
         if (!$oldPrimary || ! $newPrimary) {
             throw new Exception('Contact not found');

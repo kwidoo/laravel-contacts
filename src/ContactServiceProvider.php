@@ -11,7 +11,13 @@ use Kwidoo\Contacts\Services\TokenGenerator;
 use Kwidoo\Contacts\Services\VerificationService;
 use Kwidoo\Contacts\Contracts\VerificationService as VerificationServiceContract;
 use Kwidoo\Contacts\Services\ContactService;
+use Kwidoo\Contacts\Factories\VerificationServiceFactory;
+use Kwidoo\Contacts\Contracts\VerificationServiceFactory as VerificationServiceFactoryContract;
+use Kwidoo\Contacts\Factories\ContactServiceFactory;
+use Kwidoo\Contacts\Contracts\ContactServiceFactory as ContactServiceFactoryContract;
 use Illuminate\Support\Facades\Route;
+use Kwidoo\Contacts\Contracts\VerifierFactory as VerifierFactoryContract;
+use Kwidoo\Contacts\Factories\VerifierFactory;
 
 class ContactServiceProvider extends ServiceProvider
 {
@@ -36,28 +42,10 @@ class ContactServiceProvider extends ServiceProvider
         Route::model('contact', config('contacts.model'));
 
         $this->app->bind(ContactServiceContract::class, ContactService::class);
-
+        $this->app->bind(ContactServiceFactoryContract::class, ContactServiceFactory::class);
+        $this->app->bind(VerificationServiceFactoryContract::class, VerificationServiceFactory::class);
+        $this->app->bind(VerificationServiceContract::class, VerificationService::class);
+        $this->app->bind(VerifierFactoryContract::class, VerifierFactory::class);
         $this->app->bind(TokenGeneratorContract::class, TokenGenerator::class);
-
-        $this->app->bind(VerificationServiceContract::class, function ($app, $params) {
-            $contact = $params['contact'] ?? null;
-            if (!$contact instanceof Contact) {
-                throw new InvalidArgumentException('A valid Contact instance is required.');
-            }
-
-            $available = config('contacts.verifiers', []);
-            if (!array_key_exists($contact->type, $available)) {
-                throw new InvalidArgumentException("Unsupported contact type: {$contact->type}");
-            }
-
-            $verifier = $app->make($available[$contact->type], [
-                'tokenGenerator' => $app->make(TokenGenerator::class, [
-                    'contact' => $contact
-                ]),
-                'contact' => $contact
-            ]);
-
-            return new VerificationService($verifier, $contact);
-        });
     }
 }

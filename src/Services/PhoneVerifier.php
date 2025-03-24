@@ -22,9 +22,9 @@ class PhoneVerifier implements Verifier
      *
      * @return void
      */
-    public function create(): void
+    public function create(Contact $contact, ?string $template = null): void
     {
-        $this->phoneService->create($this->contact->value);
+        $this->phoneService->create($contact->value);
     }
 
     /**
@@ -33,10 +33,10 @@ class PhoneVerifier implements Verifier
      * @param string $token
      * @return bool
      */
-    public function verify(string $token): bool
+    public function verify(Contact $contact, string $token): bool
     {
         return $this->phoneService->validate([
-            $this->contact->value,
+            $contact->value,
             $token
         ]);
     }
