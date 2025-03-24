@@ -23,7 +23,10 @@
     "require": {
         "php": "^8.2",
         "spatie/laravel-event-sourcing": "^7.5",
-        "kwidoo/sms-verification": "*"
+        "kwidoo/sms-verification": "1.1.1",
+        "illuminate/support": "^12.0",
+        "illuminate/database": "^12.0",
+        "prettus/l5-repository": "2.10.1"
     },
     "require-dev": {
         "orchestra/testbench": "^10.0",

@@ -10,4 +10,5 @@ interface Contact
     public function contactable(): MorphTo;
     public function isVerified(): bool;
     public function isPrimary(): bool;
+    public function tokens();
 }

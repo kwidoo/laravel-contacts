@@ -11,12 +11,16 @@ use Kwidoo\Contacts\Contracts\Contact as ContactContract;
 use Kwidoo\Contacts\Exceptions\DuplicateContactException;
 use Illuminate\Support\Str;
 use Kwidoo\Database\Factories\ContactFactory;
+use Prettus\Repository\Contracts\Transformable;
+use Prettus\Repository\Traits\TransformableTrait;
 use Spatie\EventSourcing\Projections\Projection;
 
-class Contact extends Projection implements ContactContract
+class Contact extends Projection implements ContactContract, Transformable
 {
     use HasFactory;
     use SoftDeletes;
+    use HasUuids;
+    use TransformableTrait;
 
     protected $fillable = [
         'uuid',
