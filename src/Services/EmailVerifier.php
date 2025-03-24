@@ -4,9 +4,9 @@ namespace Kwidoo\Contacts\Services;
 
 use Illuminate\Support\Facades\Notification;
 use Kwidoo\Contacts\Contracts\Contact;
-use Kwidoo\Contacts\Contracts\TokenGenerator;
-use Kwidoo\Contacts\Notifications\TokenNotification;
+use Kwidoo\Contacts\Contracts\VerificationContext;
 use Kwidoo\Contacts\Contracts\Verifier;
+use Kwidoo\Contacts\Factories\GeneratorFactory;
 
 /**
  * @property \Kwidoo\Contacts\Models\Contact $contact
@@ -14,20 +14,19 @@ use Kwidoo\Contacts\Contracts\Verifier;
 class EmailVerifier implements Verifier
 {
     public function __construct(
-        protected TokenGenerator $tokenGenerator,
-
+        protected GeneratorFactory $factory,
+        protected VerificationContext $context
     ) {}
 
     /**
      * @return void
      */
-    public function create(Contact $contact, ?string $template = null): void
+    public function create(Contact $contact): void
     {
-        if (!$template) {
-            $template = TokenNotification::class;
-        }
+        $template = $this->context->getTemplate($contact);
+        $tokenGenerator = $this->factory->make($contact);
         /** @var \Kwidoo\Contacts\Models\Token */
-        $token = $this->tokenGenerator->generate();
+        $token = $tokenGenerator->generate();
 
         Notification::route('mail', $contact->value)
             ->notify(

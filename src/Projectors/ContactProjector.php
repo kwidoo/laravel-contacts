@@ -5,12 +5,13 @@ namespace Kwidoo\Contacts\Projectors;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Kwidoo\Contacts\Contracts\MustVerify;
-use Kwidoo\Contacts\Contracts\Repositories\ContactRepository;
+use Kwidoo\Contacts\Contracts\ContactRepository;
 use Kwidoo\Contacts\Contracts\VerificationServiceFactory;
 use Kwidoo\Contacts\Events\ContactCreated;
 use Kwidoo\Contacts\Events\ContactDeleted;
 use Kwidoo\Contacts\Events\ContactVerified;
 use Kwidoo\Contacts\Events\PrimaryChanged;
+use Kwidoo\Contacts\Factories\RegistrationContext;
 use Spatie\EventSourcing\EventHandlers\Projectors\Projector;
 
 class ContactProjector extends Projector
@@ -24,7 +25,7 @@ class ContactProjector extends Projector
 
     public function __construct(
         protected ContactRepository $repository,
-        protected VerificationServiceFactory $vsf
+        protected VerificationServiceFactory $factory
     ) {}
 
     /**
@@ -41,20 +42,19 @@ class ContactProjector extends Projector
             throw new Exception('Model not found');
         }
 
-        $contact = $this->repository->make([
+        $contact = $this->repository->createContact([
             ...($event->contactUuid ? ['uuid' => $event->contactUuid] : []),
             'type' => $event->type,
             'value' => $event->value,
             'is_primary' => false,
             'is_verified' => false,
             'contactable_id' => $event->identifier,
-            'contactable_type' => $class,
+            'contactable_type' => $model->getMorphClass(),
         ]);
 
-        $contact->writeable()->save();
-
         if ($model instanceof MustVerify || config('iam.should_verify')) {
-            $verificationService = $this->vsf->make($contact);
+            $verificationContext = new RegistrationContext($contact);
+            $verificationService = $this->factory->make($contact, $verificationContext);
             $verificationService->create();
         }
     }

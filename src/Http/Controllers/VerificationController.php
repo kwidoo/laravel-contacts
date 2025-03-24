@@ -4,11 +4,14 @@ namespace Kwidoo\Contacts\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 use Kwidoo\Contacts\Contracts\Contact;
-use Kwidoo\Contacts\Contracts\VerificationService;
+use Kwidoo\Contacts\Contracts\VerificationServiceFactory;
+use Kwidoo\Contacts\Factories\RegistrationContext;
 
 class VerificationController extends Controller
 {
+    public function __construct(protected VerificationServiceFactory $factory) {}
     /**
      * @param \Kwidoo\Contacts\Models\Contact $contact
      *
@@ -16,7 +19,8 @@ class VerificationController extends Controller
      */
     public function sendVerification(Contact $contact): JsonResponse
     {
-        $this->verificationService($contact)->create();
+        $verificationService = $this->factory->make($contact, new RegistrationContext, ContactAggregateRoot::class);
+        $verificationService->create();
 
         return response()->json([
             'message' => 'Verification sent'
@@ -31,7 +35,8 @@ class VerificationController extends Controller
      */
     public function verify(Contact $contact, string $token): JsonResponse
     {
-        $verified = $this->verificationService($contact)->verify($token);
+        $verificationService = $this->factory->make($contact, new RegistrationContext, ContactAggregateRoot::class);
+        $verified = $verificationService->verify($token);
 
         if (!$verified) {
             return response()->json([
@@ -41,18 +46,6 @@ class VerificationController extends Controller
 
         return response()->json([
             'message' => 'Contact verified'
-        ]);
-    }
-
-    /**
-     * @param \Kwidoo\Contacts\Models\Contact $contact
-     *
-     * @return VerificationService
-     */
-    protected function verificationService(Contact $contact): VerificationService
-    {
-        return app()->make(VerificationService::class, [
-            'contact' => $contact
         ]);
     }
 }

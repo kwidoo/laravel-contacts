@@ -4,5 +4,5 @@ namespace Kwidoo\Contacts\Contracts;
 
 interface VerifierFactory
 {
-    public function make(string $type): Verifier;
+    public function make(string $type, VerificationContext $context): Verifier;
 }

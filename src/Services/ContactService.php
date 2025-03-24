@@ -8,10 +8,15 @@ use Kwidoo\Contacts\Models\Contact;
 use Kwidoo\Contacts\Exceptions\ContactServiceException;
 use Kwidoo\Contacts\Contracts\Contactable;
 use Illuminate\Support\Str;
+use Kwidoo\Contacts\Contracts\ContactAggregate;
 
+/**
+ * @property ContactAggregateRoot $aggregate
+ */
 class ContactService implements ContactServiceContract
 {
     public function __construct(
+        protected ContactAggregate $aggregate,
         protected Contactable $model
     ) {}
 
@@ -30,12 +35,12 @@ class ContactService implements ContactServiceContract
             throw new ContactServiceException("Invalid contact type: {$type}");
         }
 
-        $uuid = Str::uuid()->toString();
-        ContactAggregateRoot::retrieve($uuid)
-            ->createContact($this->model, $uuid, $type, $value)
+        $id = Str::uuid()->toString();
+        $this->aggregate->retrieve($id)
+            ->createContact($this->model, $id, $type, $value)
             ->persist();
 
-        return $uuid;
+        return $id;
     }
 
     /**
@@ -51,7 +56,7 @@ class ContactService implements ContactServiceContract
             throw new ContactServiceException("Can't delete primary contact.");
         }
 
-        ContactAggregateRoot::retrieve($contact->getKey())
+        $this->aggregate->retrieve($contact->getKey())
             ->deleteContact($contact->getKey())
             ->persist();
 
@@ -61,14 +66,14 @@ class ContactService implements ContactServiceContract
     /**
      * Restore a soft-deleted contact by UUID.
      *
-     * @param string $uuid
+     * @param string $id
      * @return bool
      */
-    public function restore(string $uuid): bool
+    public function restore(string $id): bool
     {
         $contact = $this->model->contacts()
             ->onlyTrashed()
-            ->where('uuid', $uuid)
+            ->where('id', $id)
             ->firstOrFail();
 
         $restored = (bool) $contact->restore();

@@ -4,14 +4,15 @@ namespace Kwidoo\Contacts\Services;
 
 use Kwidoo\Contacts\Contracts\Contact;
 use Kwidoo\Contacts\Contracts\TokenGenerator;
+use Kwidoo\Contacts\Contracts\VerificationContext;
 use Kwidoo\Contacts\Contracts\Verifier;
 use Kwidoo\SmsVerification\Contracts\VerifierInterface;
 
 class PhoneVerifier implements Verifier
 {
     public function __construct(
-        protected Contact $contact,
         protected TokenGenerator $tokenGenerator,
+        protected VerificationContext $context,
         protected VerifierInterface $phoneService
     ) {
         //
@@ -22,7 +23,7 @@ class PhoneVerifier implements Verifier
      *
      * @return void
      */
-    public function create(Contact $contact, ?string $template = null): void
+    public function create(Contact $contact): void
     {
         $this->phoneService->create($contact->value);
     }

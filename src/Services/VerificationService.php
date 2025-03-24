@@ -2,16 +2,20 @@
 
 namespace Kwidoo\Contacts\Services;
 
-use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 use Kwidoo\Contacts\Contracts\Contact;
+use Kwidoo\Contacts\Contracts\ContactAggregate;
 use Kwidoo\Contacts\Contracts\VerificationService as VerificationServiceContract;
 use Kwidoo\Contacts\Contracts\Verifier;
 
+/**
+ * @property \Kwidoo\Contacts\Aggregates\ContactAggregateRoot aggregate
+ **/
 class VerificationService implements VerificationServiceContract
 {
     public function __construct(
         protected Verifier $verifier,
         protected Contact $contact,
+        protected ContactAggregate $aggregate
     ) {}
 
     /**
@@ -21,10 +25,11 @@ class VerificationService implements VerificationServiceContract
      */
     public function create(): void
     {
-        ContactAggregateRoot::retrieve($this->contact->getKey())
+        $this->aggregate->retrieve($this->contact->getKey())
             ->startVerification($this->contact->getKey(), get_class($this->verifier))
             ->persist();
-        $this->verifier->create();
+
+        $this->verifier->create($this->contact);
     }
 
     /**
@@ -34,7 +39,7 @@ class VerificationService implements VerificationServiceContract
      */
     public function verify(string $token): bool
     {
-        $verified = $this->verifier->verify($token);
+        $verified = $this->verifier->verify($this->contact, $token);
 
         if ($verified) {
             $this->markVerified();
@@ -48,7 +53,7 @@ class VerificationService implements VerificationServiceContract
      */
     public function markVerified(): void
     {
-        ContactAggregateRoot::retrieve($this->contact->getKey())
+        $this->aggregate->retrieve($this->contact->getKey())
             ->verifyContact($this->contact->getKey(), get_class($this->verifier))
             ->persist();
     }

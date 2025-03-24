@@ -3,7 +3,6 @@
 namespace Kwidoo\Contacts;
 
 use Illuminate\Support\ServiceProvider;
-use InvalidArgumentException;
 use Kwidoo\Contacts\Contracts\Contact;
 use Kwidoo\Contacts\Contracts\ContactService as ContactServiceContract;
 use Kwidoo\Contacts\Contracts\TokenGenerator as TokenGeneratorContract;
@@ -16,8 +15,12 @@ use Kwidoo\Contacts\Contracts\VerificationServiceFactory as VerificationServiceF
 use Kwidoo\Contacts\Factories\ContactServiceFactory;
 use Kwidoo\Contacts\Contracts\ContactServiceFactory as ContactServiceFactoryContract;
 use Illuminate\Support\Facades\Route;
+use Kwidoo\Contacts\Contracts\ContactAggregate;
+use Kwidoo\Contacts\Contracts\ContactRepository;
 use Kwidoo\Contacts\Contracts\VerifierFactory as VerifierFactoryContract;
 use Kwidoo\Contacts\Factories\VerifierFactory;
+use Kwidoo\Contacts\Repositories\ContactRepositoryEloquent;
+use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 
 class ContactServiceProvider extends ServiceProvider
 {
@@ -47,5 +50,9 @@ class ContactServiceProvider extends ServiceProvider
         $this->app->bind(VerificationServiceContract::class, VerificationService::class);
         $this->app->bind(VerifierFactoryContract::class, VerifierFactory::class);
         $this->app->bind(TokenGeneratorContract::class, TokenGenerator::class);
+
+
+        $this->app->bind(ContactRepository::class, ContactRepositoryEloquent::class);
+        $this->app->bind(ContactAggregate::class, ContactAggregateRoot::class);
     }
 }

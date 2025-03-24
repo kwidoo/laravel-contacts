@@ -3,6 +3,7 @@
 namespace Kwidoo\Contacts\Aggregates;
 
 use Kwidoo\Contacts\Contracts\Contactable;
+use Kwidoo\Contacts\Contracts\ContactAggregate;
 use Spatie\EventSourcing\AggregateRoots\AggregateRoot;
 use Kwidoo\Contacts\Events\ContactCreated;
 use Kwidoo\Contacts\Events\ContactVerified;
@@ -10,7 +11,7 @@ use Kwidoo\Contacts\Events\ContactDeleted;
 use Kwidoo\Contacts\Events\PrimaryChanged;
 use Kwidoo\Contacts\Events\StartVerification;
 
-class ContactAggregateRoot extends AggregateRoot
+class ContactAggregateRoot extends AggregateRoot implements ContactAggregate
 {
     public function createContact(
         Contactable $contactable,

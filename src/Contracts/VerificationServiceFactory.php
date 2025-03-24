@@ -7,6 +7,7 @@ use Kwidoo\Contacts\Contracts\VerificationService;
 interface VerificationServiceFactory
 {
     public function make(
-        Contact $contact
+        Contact $contact,
+        VerificationContext $context
     ): VerificationService;
 }
