@@ -22,6 +22,7 @@ class PhoneVerifierTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+
         $user = User::factory()->create();
         $this->contact = Contact::factory()->make([
             'type' => 'phone',

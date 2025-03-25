@@ -38,9 +38,6 @@ class ContactServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/contacts.php', 'contacts');
 
-        $config = app()->make('config');
-        $config->set('event-sourcing.projectors', array_merge(config('event-sourcing.projectors', []), [\Kwidoo\Contacts\Projectors\ContactProjector::class]));
-
         $this->app->bind(Contact::class, config('contacts.model'));
         Route::model('contact', config('contacts.model'));
 
@@ -51,8 +48,13 @@ class ContactServiceProvider extends ServiceProvider
         $this->app->bind(VerifierFactoryContract::class, VerifierFactory::class);
         $this->app->bind(TokenGeneratorContract::class, TokenGenerator::class);
 
-
         $this->app->bind(ContactRepository::class, ContactRepositoryEloquent::class);
         $this->app->bind(ContactAggregate::class, ContactAggregateRoot::class);
+
+        $config = $this->app->make('config');
+        $config->set('event-sourcing.projectors', array_merge(
+            $config->get('event-sourcing.projectors', []),
+            [Projectors\ContactProjector::class]
+        ));
     }
 }

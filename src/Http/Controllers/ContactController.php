@@ -4,16 +4,22 @@ namespace Kwidoo\Contacts\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Kwidoo\Contacts\Http\Resources\ContactResource;
-use Kwidoo\Contacts\Contracts\ContactService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Routing\Controller;
 use Kwidoo\Contacts\Http\Requests\StoreRequest;
 use Kwidoo\Contacts\Models\Contact;
 use Kwidoo\Contacts\Contracts\Contactable;
+use Kwidoo\Contacts\Contracts\ContactServiceFactory;
 
 class ContactController extends Controller
 {
+
+    public function __construct(protected ContactServiceFactory $factory)
+    {
+
+        // then use in method
+    }
     /**
      * Display a listing of the contacts.
      *
@@ -67,9 +73,7 @@ class ContactController extends Controller
      */
     public function store(StoreRequest $request)
     {
-        $contactService = app()->make(ContactService::class, [
-            'model' => $request->user()
-        ]);
+        $contactService = $this->factory->make($request->user());
 
         $contact = $contactService->create(
             $request->get('type'),
@@ -94,9 +98,8 @@ class ContactController extends Controller
             ], 403);
         }
 
-        $deleted = app()->make(ContactService::class, [
-            'model' => $request->user()
-        ])->destroy($contact);
+        $contactService = $this->factory->make($request->user());
+        $deleted = $contactService->destroy($contact);
 
         return response()->json(['deleted' => $deleted]);
     }
@@ -116,9 +119,8 @@ class ContactController extends Controller
             ], 403);
         }
 
-        $restored = app()->make(ContactService::class, [
-            'model' => $request->user()
-        ])->restore($uuid);
+        $contactService = $this->factory->make($request->user());
+        $restored = $contactService->restore($uuid);
 
         return response()->json(['restored' => $restored]);
     }

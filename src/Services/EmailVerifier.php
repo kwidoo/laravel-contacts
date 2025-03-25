@@ -50,7 +50,7 @@ class EmailVerifier implements Verifier
             ->isNotVerified()
             ->firstOrFail();
 
-        if (!$token) {
+        if (!$foundToken) {
             return false;
         }
 

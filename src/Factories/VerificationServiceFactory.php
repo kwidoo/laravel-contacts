@@ -27,7 +27,7 @@ class VerificationServiceFactory implements VerificationServiceFactoryContract
         return app()->make(VerificationService::class, [
             'verifier' => $verifier,
             'contact' => $contact,
-            '$aggregate' => $aggregateName ? app()->make($aggregateName) : null
+            'aggregate' => $aggregateName ? app()->make($aggregateName) : null
         ]);
     }
 }

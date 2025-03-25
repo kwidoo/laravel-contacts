@@ -7,7 +7,8 @@ return [
         'email' => \Kwidoo\Contacts\Services\EmailVerifier::class,
     ],
     'contexts' => [
-        'register' => \Kwidoo\Contacts\Factories\RegistrationContext::class,
+        'email' => \Kwidoo\Contacts\Factories\RegistrationContext::class,
+        'phone' => \Kwidoo\Contacts\Factories\RegistrationContext::class, // customize
     ],
 
     // Use UUIDs for contacts?

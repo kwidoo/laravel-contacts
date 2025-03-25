@@ -13,6 +13,6 @@ class RegistrationContext implements VerificationContext
         if ($contact->type === 'phone') {
             return 'phone_verification';
         }
-        return TokenNotification::class;
+        return config("contacts.templates.{$contact->type}", TokenNotification::class);
     }
 }

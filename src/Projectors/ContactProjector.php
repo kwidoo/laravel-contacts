@@ -37,7 +37,7 @@ class ContactProjector extends Projector
     {
         $class = Relation::getMorphedModel($event->class) ?? $event->class;
 
-        $model = $class::find($event->identifier);
+        $model = $class::findOrFail($event->identifier);
         if (!$model) {
             throw new Exception('Model not found');
         }
@@ -66,7 +66,7 @@ class ContactProjector extends Projector
      */
     public function onContactDeleted(ContactDeleted $event): void
     {
-        $contact = $this->repository->find($event->contactUuid);
+        $contact = $this->repository->findOrFail($event->contactUuid);
         if ($contact) {
             $contact->writeable()->delete();
         }
@@ -79,7 +79,7 @@ class ContactProjector extends Projector
      */
     public function onContactVerified(ContactVerified $event): void
     {
-        $contact = $this->repository->find($event->contactUuid);
+        $contact = $this->repository->findOrFail($event->contactUuid);
         if ($contact) {
             $contact->writeable()->update(['is_verified' => true]);
         }
@@ -92,8 +92,8 @@ class ContactProjector extends Projector
      */
     public function onPrimaryChanged(PrimaryChanged $event): void
     {
-        $oldPrimary = $this->repository->find($event->oldContactUuid);
-        $newPrimary = $this->repository->find($event->newContactUuid);
+        $oldPrimary = $this->repository->findOrFail($event->oldContactUuid);
+        $newPrimary = $this->repository->findOrFail($event->newContactUuid);
 
         if (!$oldPrimary || ! $newPrimary) {
             throw new Exception('Contact not found');
