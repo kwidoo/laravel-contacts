@@ -4,6 +4,7 @@ namespace Kwidoo\Contacts\Projectors;
 
 use Exception;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Kwidoo\Contacts\Aggregates\ContactAggregateRoot;
 use Kwidoo\Contacts\Contracts\MustVerify;
 use Kwidoo\Contacts\Contracts\ContactRepository;
 use Kwidoo\Contacts\Contracts\VerificationServiceFactory;
@@ -54,7 +55,7 @@ class ContactProjector extends Projector
 
         if ($model instanceof MustVerify || config('iam.should_verify')) {
             $verificationContext = new RegistrationContext($contact);
-            $verificationService = $this->factory->make($contact, $verificationContext);
+            $verificationService = $this->factory->make($contact, $verificationContext, ContactAggregateRoot::class);
             $verificationService->create();
         }
     }
