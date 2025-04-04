@@ -50,8 +50,12 @@ class ContactService implements ContactServiceContract
      * @return bool
      * @throws ContactServiceException
      */
-    public function destroy(Contact $contact): bool
+    public function delete(string $id): bool
     {
+        $contact = $this->model->contacts()
+            ->where('id', $id)
+            ->firstOrFail();
+
         if ($contact->is_primary) {
             throw new ContactServiceException("Can't delete primary contact.");
         }
